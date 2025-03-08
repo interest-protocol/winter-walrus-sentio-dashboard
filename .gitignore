@@ -3,4 +3,4 @@ types
 .yarn
 schema
 dist
-abi
+abis
