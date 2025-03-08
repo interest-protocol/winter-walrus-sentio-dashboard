@@ -1,0 +1,5 @@
+project: winter-walrus
+contracts:
+  - chain: sui_testnet
+    address: '0x2bddde9d73d65a82de0127f6e97f6a511ccef20c976747b94af77d4928e64a4d'
+    name: winter-walrus
