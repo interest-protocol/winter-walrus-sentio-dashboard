@@ -1,0 +1,319 @@
+{
+  "createdAt": "2025-03-08T10:44:46.694308Z",
+  "default": true,
+  "id": "fyQAx5Qd",
+  "layouts": {
+    "responsiveLayouts": {
+      "md": {
+        "layouts": [
+          {
+            "h": 4,
+            "i": "rsuuEOkIh6uoWqTN",
+            "w": 6
+          },
+          {
+            "h": 4,
+            "i": "Fd4IIuZ6jPc3gw2-",
+            "w": 6,
+            "x": 6
+          },
+          {
+            "h": 4,
+            "i": "xlLT7jL0D3HuANKl",
+            "w": 6,
+            "y": 4
+          },
+          {
+            "h": 4,
+            "i": "tBTGXxMhyF57sjEh",
+            "w": 6,
+            "x": 6,
+            "y": 4
+          },
+          {
+            "h": 4,
+            "i": "WVBMPPu1ssjIhBhy",
+            "w": 6,
+            "y": 8
+          },
+          {
+            "h": 4,
+            "i": "Cq3iyw1NBwWLBPXX",
+            "w": 6,
+            "x": 6,
+            "y": 8
+          }
+        ]
+      }
+    }
+  },
+  "name": "Blizzard",
+  "ownerId": "IBp6wliYNvxh",
+  "panels": {
+    "Cq3iyw1NBwWLBPXX": {
+      "chart": {
+        "datasourceType": "EVENTS",
+        "eventLogsConfig": {
+          "columnsConfig": {
+            "columns": [
+              {
+                "accessorKey": "severity",
+                "id": "severity",
+                "name": "Severity",
+                "size": 20
+              },
+              {
+                "accessorKey": "timestamp",
+                "enableHiding": true,
+                "enableResizing": true,
+                "enableSorting": true,
+                "id": "timestamp",
+                "name": "Date",
+                "size": 150
+              },
+              {
+                "accessorKey": "eventName",
+                "enableHiding": true,
+                "enableResizing": true,
+                "enableSorting": true,
+                "id": "event_name",
+                "name": "Event",
+                "size": 100
+              },
+              {
+                "accessorKey": "chainId",
+                "enableHiding": true,
+                "enableResizing": true,
+                "enableSorting": true,
+                "id": "chain",
+                "name": "Chain",
+                "size": 100
+              },
+              {
+                "accessorKey": "contractName",
+                "enableHiding": true,
+                "enableResizing": true,
+                "enableSorting": true,
+                "id": "contract",
+                "name": "Contract",
+                "size": 100
+              },
+              {
+                "accessorKey": "contractAddress",
+                "enableHiding": true,
+                "enableResizing": true,
+                "enableSorting": true,
+                "id": "address",
+                "name": "Contract Address",
+                "size": 180
+              },
+              {
+                "accessorKey": "highlightedMessage",
+                "enableHiding": true,
+                "enableResizing": true,
+                "enableSorting": true,
+                "id": "message",
+                "name": "Message",
+                "size": 300
+              }
+            ],
+            "state": {
+              "sorting": [
+                {
+                  "desc": true,
+                  "id": "timestamp"
+                }
+              ]
+            }
+          },
+          "timeRangeOverride": {}
+        },
+        "type": "TABLE"
+      },
+      "dashboardId": "fyQAx5Qd",
+      "id": "Cq3iyw1NBwWLBPXX",
+      "name": "Recent Events"
+    },
+    "Fd4IIuZ6jPc3gw2-": {
+      "chart": {
+        "config": {
+          "timeRangeOverride": {
+            "timeRange": {}
+          },
+          "valueConfig": {
+            "dateFormat": "LLL",
+            "maxFractionDigits": 2,
+            "maxSignificantDigits": 3
+          }
+        },
+        "datasourceType": "INSIGHTS",
+        "insightsQueries": [
+          {
+            "metricsQuery": {
+              "id": "a",
+              "query": "total_stake"
+            }
+          }
+        ],
+        "type": "QUERY_VALUE"
+      },
+      "dashboardId": "fyQAx5Qd",
+      "id": "Fd4IIuZ6jPc3gw2-",
+      "name": "Total Stake"
+    },
+    "WVBMPPu1ssjIhBhy": {
+      "chart": {
+        "config": {
+          "timeRangeOverride": {
+            "timeRange": {}
+          }
+        },
+        "datasourceType": "INSIGHTS",
+        "formulas": [
+          {
+            "alias": "TVL",
+            "expression": "a-b",
+            "id": "A"
+          }
+        ],
+        "insightsQueries": [
+          {
+            "metricsQuery": {
+              "alias": "Mint",
+              "disabled": true,
+              "id": "a",
+              "query": "mint_acc"
+            }
+          },
+          {
+            "metricsQuery": {
+              "alias": "Burn",
+              "disabled": true,
+              "id": "b",
+              "query": "burn_acc"
+            }
+          }
+        ]
+      },
+      "dashboardId": "fyQAx5Qd",
+      "id": "WVBMPPu1ssjIhBhy",
+      "name": "Supply Mint/Snow"
+    },
+    "rsuuEOkIh6uoWqTN": {
+      "chart": {
+        "config": {
+          "timeRangeOverride": {
+            "timeRange": {
+              "interval": {
+                "unit": "d",
+                "value": 1
+              }
+            }
+          },
+          "valueConfig": {
+            "dateFormat": "LLL",
+            "maxSignificantDigits": 3
+          }
+        },
+        "datasourceType": "INSIGHTS",
+        "insightsQueries": [
+          {
+            "dataSource": "EVENTS",
+            "eventsQuery": {
+              "aggregation": {
+                "countUnique": {
+                  "duration": {
+                    "unit": "day"
+                  }
+                }
+              },
+              "id": "a",
+              "resource": {},
+              "selectorExpr": {
+                "logicExpr": {}
+              }
+            }
+          }
+        ],
+        "type": "QUERY_VALUE"
+      },
+      "dashboardId": "fyQAx5Qd",
+      "id": "rsuuEOkIh6uoWqTN",
+      "name": "Total Users"
+    },
+    "tBTGXxMhyF57sjEh": {
+      "chart": {
+        "config": {
+          "timeRangeOverride": {
+            "timeRange": {}
+          }
+        },
+        "datasourceType": "INSIGHTS",
+        "formulas": [
+          {
+            "alias": "TVL",
+            "expression": "a-b",
+            "id": "A"
+          }
+        ],
+        "insightsQueries": [
+          {
+            "metricsQuery": {
+              "disabled": true,
+              "id": "a",
+              "query": "total_stake"
+            }
+          },
+          {
+            "metricsQuery": {
+              "disabled": true,
+              "id": "b",
+              "query": "total_unstake"
+            }
+          }
+        ]
+      },
+      "dashboardId": "fyQAx5Qd",
+      "id": "tBTGXxMhyF57sjEh",
+      "name": "TVL (Total Value Locked)"
+    },
+    "xlLT7jL0D3HuANKl": {
+      "chart": {
+        "config": {
+          "timeRangeOverride": {
+            "timeRange": {
+              "interval": {
+                "unit": "d",
+                "value": 1
+              }
+            }
+          }
+        },
+        "datasourceType": "INSIGHTS",
+        "insightsQueries": [
+          {
+            "dataSource": "EVENTS",
+            "eventsQuery": {
+              "aggregation": {
+                "unique": {}
+              },
+              "id": "a",
+              "resource": {},
+              "selectorExpr": {
+                "logicExpr": {}
+              }
+            }
+          }
+        ],
+        "type": "BAR"
+      },
+      "dashboardId": "fyQAx5Qd",
+      "id": "xlLT7jL0D3HuANKl",
+      "name": "Daily Active Wallets"
+    }
+  },
+  "projectId": "H7o54xe2",
+  "projectOwner": "interest-labs",
+  "projectSlug": "winter-walrus",
+  "updatedAt": "2025-03-09T22:55:35.442902Z"
+}

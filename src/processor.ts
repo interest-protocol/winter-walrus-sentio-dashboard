@@ -1,62 +1,106 @@
-import { blizzard_event_wrapper } from './types/sui/testnet/winter-walrus.js';
-import { SuiNetwork } from '@sentio/sdk/sui';
+import { getPriceBySymbol } from '@sentio/sdk/utils';
+import { blizzard_event_wrapper } from './types/sui/winter-walrus.js';
+import { SuiContext, SuiNetwork } from '@sentio/sdk/sui';
+import { Counter, Gauge } from '@sentio/sdk';
 
-const EVENTS = {
-  StakedWal:
-    '0x9bcea92f0fe583011e942d3fc50cfd3e54be9652e55fa7221fec77c0d45e7c17::blizzard_events::StakedWalAdded',
+const extractEvent = (t: string) => t.match(/::blizzard_events::([^>]+)>/)?.[1] || null;
+const extractSymbol = (t: string) => (t.match(/::([^:]+)$/)?.[1] ?? t);
+const downScale = (amount: bigint) => Number(amount) / 1_000_000_000;
+
+const WAL_SYMBOL = 'WAL' as const;
+
+type EventName = 'Mint' | 'MintAfterVotesFinished' | 'BurnLst';
+type EventHandler = (evt: blizzard_event_wrapper.BlizzardEventInstance, ctx: SuiContext) => void;
+
+const state = {
+  totalMinted: 0,
+  totalBurned: 0
+};
+
+const metrics = {
+  walPrice: Gauge.register('walPrice'),
+  tvlUsd: Gauge.register('tvlUsd'),
+  tvlWal: Gauge.register('tvlWal'),
+  
+  mintVolume: Counter.register('mintVolume'),
+  burnVolume: Counter.register('burnVolume'),
+  
+  mintOperations: Counter.register('mintOperations'),
+  burnOperations: Counter.register('burnOperations'),
+  
+  mintByLst: Counter.register('mintByLst'),
+  burnByLst: Counter.register('burnByLst')
+};
+
+function isValidEventName(name: string): name is EventName {
+  return ['Mint', 'MintAfterVotesFinished', 'BurnLst'].includes(name);
+}
+
+async function updateTVLMetrics(ctx: SuiContext) {
+  const currentPrice = await getPriceBySymbol(WAL_SYMBOL, ctx.timestamp);
+  const netWalAmount = state.totalMinted - state.totalBurned;
+  
+  metrics.tvlWal.record(ctx, netWalAmount);
+  
+  if (currentPrice) {
+    metrics.walPrice.record(ctx, currentPrice);
+    metrics.tvlUsd.record(ctx, netWalAmount * currentPrice);
+  }
+}
+
+function handleMintEvent(evt: blizzard_event_wrapper.BlizzardEventInstance, ctx: SuiContext) {
+  const lst = extractSymbol(evt.data_decoded.pos0.lst.name);
+  const amount = downScale(BigInt(evt.data_decoded.pos0.wal_value));
+  
+  state.totalMinted += amount;
+  
+  metrics.mintVolume.add(ctx, amount);
+  metrics.mintOperations.add(ctx, 1);
+  metrics.mintByLst.add(ctx, amount, { lst });
+}
+
+function handleBurnEvent(evt: blizzard_event_wrapper.BlizzardEventInstance, ctx: SuiContext) {
+  const lst = extractSymbol(evt.data_decoded.pos0.lst.name);
+  const amount = downScale(BigInt(evt.data_decoded.pos0.wal_value));
+  
+  state.totalBurned += amount;
+  
+  metrics.burnVolume.add(ctx, amount);
+  metrics.burnOperations.add(ctx, 1);
+  metrics.burnByLst.add(ctx, amount, { lst });
+}
+
+const eventHandlers: Record<EventName, EventHandler> = {
+  Mint: handleMintEvent,
+  MintAfterVotesFinished: handleMintEvent,
+  BurnLst: handleBurnEvent
 };
 
 blizzard_event_wrapper
-  .bind({ network: SuiNetwork.TEST_NET, startCheckpoint: 163_129_000n })
-  .onEventBlizzardEvent((evt, ctx) => {
-    if (evt.type.includes(EVENTS.StakedWal)) {
-    }
+  .bind({ network: SuiNetwork.MAIN_NET, startCheckpoint: BigInt(127476680) })
+  .onEventBlizzardEvent(async (evt, ctx) => {
+    const eventName = extractEvent(evt.type);
+    if (!eventName || !isValidEventName(eventName)) return;
+    
+    eventHandlers[eventName](evt, ctx);
+    
+    await updateTVLMetrics(ctx);
+    
+    ctx.eventLogger.emit(eventName, {
+      id: evt.id.eventSeq,
+      txDigest: evt.id.txDigest,
+      sender: evt.sender,
+      packageId: evt.packageId,
+      transactionModule: evt.transactionModule,
+      lst: extractSymbol(evt.data_decoded.pos0.lst.name),
+      amount: downScale(BigInt(evt.data_decoded.pos0.wal_value))
+    });
+  })
+  .onTransactionBlock(async (_, ctx) => {
+    const currentPrice = await getPriceBySymbol(WAL_SYMBOL, ctx.timestamp);
+    ctx.eventLogger.emit('newPrice', {
+      symbol: WAL_SYMBOL,
+      price: currentPrice,
+    });
+    await updateTVLMetrics(ctx);
   });
-
-const x = {
-  id: {
-    txDigest: '8Cwbu8FgA8BAkjeVEvQXhXD49qbNfksBURjwT1NBGpRD',
-    eventSeq: '0',
-  },
-  packageId:
-    '0x2bddde9d73d65a82de0127f6e97f6a511ccef20c976747b94af77d4928e64a4d',
-  transactionModule: 'blizzard_protocol',
-  sender: '0x0bac5c2a1d0ea71b893dab40bf4454c01e9a5940ceb01f40400f3e1ae3f6a434',
-  type: '0x9bcea92f0fe583011e942d3fc50cfd3e54be9652e55fa7221fec77c0d45e7c17::blizzard_event_wrapper::BlizzardEvent<0x9bcea92f0fe583011e942d3fc50cfd3e54be9652e55fa7221fec77c0d45e7c17::blizzard_events::StakedWalAdded>',
-  parsedJson: {
-    pos0: {
-      activation_epoch: 25,
-      idx: '3',
-      joined: true,
-      lst: {
-        name: 'b9671a4464279e45aa7a1264fabba1415a657ef24fa062c6a0d60d11bf04ee31::snow::SNOW',
-      },
-      node_id:
-        '0x2eab79988f43bc772f4eb56be964a018b0ec627d1e92ae11985b69272030206e',
-      staked_wal:
-        '0xfd49ee2554f7edee2401395314378234faed9fbc52c375bd5826b9605c64f68d',
-      value: '1000000000',
-      wal_epoch: 24,
-    },
-  },
-  bcs: '',
-  data_decoded: {
-    pos0: {
-      node_id:
-        '0x2eab79988f43bc772f4eb56be964a018b0ec627d1e92ae11985b69272030206e',
-      lst: {
-        name: 'b9671a4464279e45aa7a1264fabba1415a657ef24fa062c6a0d60d11bf04ee31::snow::SNOW',
-      },
-      staked_wal:
-        '0xfd49ee2554f7edee2401395314378234faed9fbc52c375bd5826b9605c64f68d',
-      activation_epoch: 25,
-      value: '1000000000',
-      idx: '3',
-      wal_epoch: 24,
-      joined: true,
-    },
-  },
-  type_arguments: [
-    '0x9bcea92f0fe583011e942d3fc50cfd3e54be9652e55fa7221fec77c0d45e7c17::blizzard_events::StakedWalAdded',
-  ],
-};
